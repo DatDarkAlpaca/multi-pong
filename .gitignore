@@ -7,6 +7,19 @@
 *.o
 *.obj
 
+# Visual Studio files:
+.vs
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# Binaries:
+[Bb]in
+[Ii]ntermediate
+
 # Precompiled Headers
 *.gch
 *.pch
@@ -14,7 +27,6 @@
 # Compiled Dynamic libraries
 *.so
 *.dylib
-*.dll
 
 # Fortran module files
 *.mod
