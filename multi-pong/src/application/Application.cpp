@@ -1,10 +1,10 @@
 #include "Application.h"
 #include "scenes/Scenes.h"
-#include "resources/FontManager.h"
 
 pong::Application::Application()
 {
-	m_Window = std::make_unique<sf::RenderWindow>(sf::VideoMode(600, 600), "Multipong v1.0");
+	m_Window = std::make_unique<sf::RenderWindow>(sf::VideoMode(600, 480),
+		"Multipong v1.0", sf::Style::Close | sf::Style::Titlebar);
 }
 
 void pong::Application::Run()
@@ -13,11 +13,11 @@ void pong::Application::Run()
 
 	while (m_Window->isOpen())
 	{
+		HandleInput();
+
 		Update(0.f);
 
 		Render();
-
-		HandleInput();
 	}
 }
 
@@ -49,8 +49,13 @@ void pong::Application::HandleInput()
 
 void pong::Application::Initialize()
 {
-	FontManager::GetInstance()->Add("pixel-font", "./res/fonts/free_pixel.ttf");
+	m_FontManager = std::make_unique<ResourceManager<sf::Font>>();
+	m_FontManager->Add("free_pixel", "./res/fonts/free_pixel.ttf");
 
-	m_SceneHandler.AddScene("main_menu", std::make_unique<MainMenuScene>());
+	auto font = m_FontManager->Get("free_pixel");
+
+	m_SceneHandler.AddScene("main_menu",
+		std::make_unique<MainMenuScene>(*m_Window.get(), m_SceneHandler, font));
+
 	m_SceneHandler.SetScene("main_menu");
 }

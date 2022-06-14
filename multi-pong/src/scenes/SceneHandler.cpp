@@ -18,6 +18,7 @@ void pong::SceneHandler::SetScene(const std::string& sceneName)
 	{
 		m_CurrentScene = m_Scenes[sceneName].get();
 		m_CurrentSceneName = sceneName;
+		m_CurrentScene->OnSceneEnter();
 	}
 }
 

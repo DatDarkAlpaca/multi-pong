@@ -106,9 +106,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\application\Application.h" />
+    <ClInclude Include="src\gui\TextButton.h" />
     <ClInclude Include="src\pch.h" />
-    <ClInclude Include="src\resources\FontManager.h" />
-    <ClInclude Include="src\resources\ResourceManagerBase.h" />
+    <ClInclude Include="src\resources\ResourceManager.h" />
     <ClInclude Include="src\scenes\IScene.h" />
     <ClInclude Include="src\scenes\MainMenuScene.h" />
     <ClInclude Include="src\scenes\SceneHandler.h" />
