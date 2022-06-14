@@ -5,7 +5,7 @@ namespace pong
 {
 	struct IScene
 	{
-		virtual void Render() = 0;
+		virtual void Render(sf::RenderTarget& target) = 0;
 
 		virtual void Update(float) = 0;
 

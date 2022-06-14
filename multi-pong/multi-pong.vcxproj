@@ -102,15 +102,23 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="src\scenes\SceneHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\application\Application.h" />
     <ClInclude Include="src\pch.h" />
+    <ClInclude Include="src\resources\FontManager.h" />
+    <ClInclude Include="src\resources\ResourceManagerBase.h" />
     <ClInclude Include="src\scenes\IScene.h" />
+    <ClInclude Include="src\scenes\MainMenuScene.h" />
     <ClInclude Include="src\scenes\SceneHandler.h" />
+    <ClInclude Include="src\scenes\Scenes.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.gitignore" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="res\fonts\license.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

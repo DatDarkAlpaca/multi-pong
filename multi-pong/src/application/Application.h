@@ -1,6 +1,7 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-
+#include "resources/FontManager.h"
+#include "scenes/SceneHandler.h"
 
 namespace pong
 {
@@ -20,7 +21,11 @@ namespace pong
 		void HandleInput();
 
 	private:
+		void Initialize();
+
+	private:
 		std::unique_ptr<sf::RenderWindow> m_Window;
+		SceneHandler m_SceneHandler;
 	};
 }
 
