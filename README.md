@@ -26,7 +26,7 @@ The executable files are located at `bin/Configuration/Platform`, and the interm
 As for this version, there is only a "hidden" local multiplayer option. To play it,
 press `Q` in the main menu. You can press `Backspace` to go back to the main menu.
 The left paddle is controlled using the `W` and `S` keys. The right one can be controlled
-using the arrow keys.
+using the arrow keys. To begin, press `Enter`.
 
 ## License
 
