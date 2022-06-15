@@ -16,6 +16,9 @@ void pong::SceneHandler::SetScene(const std::string& sceneName)
 	auto it = m_Scenes.find(sceneName);
 	if (it != m_Scenes.end())
 	{
+		if (m_CurrentScene)
+			m_CurrentScene->OnSceneLeave();
+
 		m_CurrentScene = m_Scenes[sceneName].get();
 		m_CurrentSceneName = sceneName;
 		m_CurrentScene->OnSceneEnter();

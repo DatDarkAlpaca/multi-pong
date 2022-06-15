@@ -16,5 +16,7 @@ namespace pong
 		virtual void Update(float) = 0;
 
 		virtual void HandleInput(sf::Event event) = 0;
+
+		virtual void OnSceneLeave() { }
 	};
 }

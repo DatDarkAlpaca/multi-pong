@@ -10,10 +10,39 @@ namespace pong
 	{
 	public:
 		MainMenuScene(sf::RenderWindow& window, SceneHandler& sceneHandler, sf::Font* font)
-			: refWindow(window), sceneHandler(sceneHandler), m_Font(font) { }
+			: refWindow(window), sceneHandler(sceneHandler), m_Font(font)
+		{
+			ConfigureUI();
+		}
 
 	public:
-		void OnSceneEnter() override
+		void Render(sf::RenderTarget& target) override
+		{
+			target.draw(m_Title);
+			target.draw(m_Host.text);
+			target.draw(m_Join.text);
+			target.draw(m_Exit.text);
+		}
+
+		void Update(float dt) override
+		{
+			m_Host.Update(refWindow);
+			m_Join.Update(refWindow);
+			m_Exit.Update(refWindow);
+
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+				sceneHandler.SetScene("play_test");
+		}
+
+		void HandleInput(sf::Event event) override
+		{
+			m_Host.HandleInput(event);
+			m_Join.HandleInput(event);
+			m_Exit.HandleInput(event);
+		}
+
+	private:
+		void ConfigureUI()
 		{
 			m_Title = sf::Text("MultiPong", *m_Font, 48);
 			m_Title.setPosition(
@@ -39,28 +68,6 @@ namespace pong
 				600.f / 2.f - (m_Exit.text.getLocalBounds().width / 2.f),
 				230.f + 50.f + 50.f
 			);
-		}
-
-		void Render(sf::RenderTarget& target) override
-		{
-			target.draw(m_Title);
-			target.draw(m_Host.text);
-			target.draw(m_Join.text);
-			target.draw(m_Exit.text);
-		}
-
-		void Update(float dt) override
-		{
-			m_Host.Update(refWindow);
-			m_Join.Update(refWindow);
-			m_Exit.Update(refWindow);
-		}
-
-		void HandleInput(sf::Event event) override
-		{
-			m_Host.HandleInput(event);
-			m_Join.HandleInput(event);
-			m_Exit.HandleInput(event);
 		}
 
 	private:

@@ -111,6 +111,7 @@
     <ClInclude Include="src\resources\ResourceManager.h" />
     <ClInclude Include="src\scenes\IScene.h" />
     <ClInclude Include="src\scenes\MainMenuScene.h" />
+    <ClInclude Include="src\scenes\PlayTestScene.h" />
     <ClInclude Include="src\scenes\SceneHandler.h" />
     <ClInclude Include="src\scenes\Scenes.h" />
   </ItemGroup>

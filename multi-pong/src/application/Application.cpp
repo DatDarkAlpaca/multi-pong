@@ -3,19 +3,27 @@
 
 pong::Application::Application()
 {
+	sf::ContextSettings context;
+	context.antialiasingLevel = 8;
+
 	m_Window = std::make_unique<sf::RenderWindow>(sf::VideoMode(600, 480),
-		"Multipong v1.0", sf::Style::Close | sf::Style::Titlebar);
+		"Multipong v1.0", sf::Style::Close | sf::Style::Titlebar, context);
+
+	m_Window->setFramerateLimit(60);
 }
 
 void pong::Application::Run()
 {
 	Initialize();
 
+	sf::Clock clock;
 	while (m_Window->isOpen())
 	{
+		float dt = clock.restart().asSeconds();
+
 		HandleInput();
 
-		Update(0.f);
+		Update(dt);
 
 		Render();
 	}
@@ -56,6 +64,9 @@ void pong::Application::Initialize()
 
 	m_SceneHandler.AddScene("main_menu",
 		std::make_unique<MainMenuScene>(*m_Window.get(), m_SceneHandler, font));
+
+	m_SceneHandler.AddScene("play_test",
+		std::make_unique<PlayTestScene>(*m_Window.get(), m_SceneHandler, font));
 
 	m_SceneHandler.SetScene("main_menu");
 }
