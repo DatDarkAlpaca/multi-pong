@@ -9,8 +9,8 @@ After installing it, proceed to the steps below.
 ## Cloning
 
 There are a few options to clone the project. You can either use the terminal
-command below, [clone](https://github.com/DatDarkAlpaca/Degenerate-Bases-NoGUI/) 
-directly from the Github repository, or [download](https://github.com/DatDarkAlpaca/Degenerate-Bases-NoGUI/archive/refs/heads/main.zip)
+command below, [clone](https://github.com/DatDarkAlpaca/multi-pong) 
+directly from the Github repository, or [download](https://github.com/DatDarkAlpaca/multi-pong/archive/refs/heads/main.zip)
 it instead.
 
     git clone https://github.com/DatDarkAlpaca/multi-pong

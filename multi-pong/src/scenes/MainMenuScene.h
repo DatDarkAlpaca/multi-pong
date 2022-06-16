@@ -51,12 +51,14 @@ namespace pong
 			);
 
 			m_Host.text = sf::Text("Host", *m_Font, 32);
+			m_Host.SetFunction([&]() { sceneHandler.SetScene("host_menu"); });
 			m_Host.text.setPosition(
 				600.f / 2.f - (m_Host.text.getLocalBounds().width / 2.f),
 				230.f
 			);
 
 			m_Join.text = sf::Text("Join", *m_Font, 32);
+			m_Join.SetFunction([&]() { sceneHandler.SetScene("join_menu"); });
 			m_Join.text.setPosition(
 				600.f / 2.f - (m_Join.text.getLocalBounds().width / 2.f),
 				230.f + 50.f

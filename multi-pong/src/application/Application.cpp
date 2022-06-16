@@ -68,5 +68,11 @@ void pong::Application::Initialize()
 	m_SceneHandler.AddScene("play_test",
 		std::make_unique<PlayTestScene>(*m_Window.get(), m_SceneHandler, font));
 
+	m_SceneHandler.AddScene("host_menu",
+		std::make_unique<PlayTestScene>(*m_Window.get(), m_SceneHandler, font, true));
+
+	m_SceneHandler.AddScene("join_menu",
+		std::make_unique<PlayTestScene>(*m_Window.get(), m_SceneHandler, font, false));
+
 	m_SceneHandler.SetScene("main_menu");
 }

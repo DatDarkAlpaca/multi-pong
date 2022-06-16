@@ -71,8 +71,8 @@ namespace pong
 			speed = 250.f;
 
 			// Todo: set a random generator up.
-			float angle = 30;
-			float to_rad = -std::numbers::pi / 180.f;
+			float angle = 0;
+			float to_rad = -(float)std::numbers::pi / 180.f;
 
 			velocity.x = std::cosf(angle * to_rad);
 			velocity.y = std::sinf(angle * to_rad);
@@ -101,6 +101,8 @@ namespace pong
 
 		else if (ball.getPosition().x >= rightLose)
 			return GameOverState::LeftWins;
+
+		return GameOverState::None;
 	}
 
 	static void normalize(sf::Vector2f& vector)
@@ -134,14 +136,17 @@ namespace pong
 		return false;
 	}
 
+	// Network:
+	enum class ObjectType : sf::Uint8 { Ball = 0, Left, Right };
+
 	/*
 	*	Main Game:
 	*/
 	class PlayTestScene : public IScene
 	{
 	public:
-		PlayTestScene(sf::RenderWindow& window, SceneHandler& sceneHandler, sf::Font* font)
-			: refWindow(window), sceneHandler(sceneHandler), m_Font(font)
+		PlayTestScene(sf::RenderWindow& window, SceneHandler& sceneHandler, sf::Font* font, bool isHost = true)
+			: refWindow(window), sceneHandler(sceneHandler), m_Font(font), m_IsHost(isHost)
 		{
 			m_HitBuffer.loadFromFile("./res/sounds/hit.wav");
 			m_HitSound.setBuffer(m_HitBuffer);
@@ -153,6 +158,239 @@ namespace pong
 	public:
 		void OnSceneEnter() override
 		{
+			std::cout << "Scene loaded.\n";
+			m_Socket.setBlocking(true);
+
+			if (m_IsHost)
+			{
+				sf::TcpListener listener;
+				std::cout << "Listening for incoming connections.\n";
+				listener.listen(54000);
+				listener.accept(m_Socket);
+
+				LoadSceneAssets();
+			}
+			else
+			{
+				m_Socket.connect("26.32.89.95", 54000);
+				std::cout << "Connected\n";
+				LoadSceneAssets();
+			}
+		}
+
+		void Render(sf::RenderTarget& target) override
+		{
+			if (m_Socket.isBlocking())
+				return;
+
+			target.draw(*ball);
+			target.draw(*left);
+			target.draw(*right);
+
+			target.draw(*m_LeftScoreText);
+			target.draw(*m_RightScoreText);
+
+			target.draw(*m_GoBackText);
+		}
+
+		void Update(float dt) override
+		{
+			sf::Packet packet;
+			m_Socket.receive(packet);
+			sf::String data;
+			if (packet >> data && data == "disconnect")
+				sceneHandler.SetScene("main_menu");
+
+			if (m_Socket.isBlocking())
+				return;
+
+			if (!m_IsHost && m_Paused)
+			{
+				sf::Packet packet;
+				m_Socket.receive(packet);
+				sf::String data;
+				if (packet >> data && data == "play")
+					m_Paused = false;
+			}
+
+			if (m_Paused)
+				return;
+
+			// Networking:
+			if (m_IsHost)
+			{
+				sf::Packet ballPacket;
+				ball->Update(dt);
+				ballPacket << (sf::Uint8)ObjectType::Ball << ball->speed << ball->getPosition().x << ball->getPosition().y;
+				m_Socket.send(ballPacket);
+			}
+			else
+			{
+				sf::Vector2f ballPos;
+				sf::Uint8 type;
+				sf::Packet packet;
+				float speed;
+				m_Socket.receive(packet);
+				if (packet >> type >> speed >> ballPos.x >> ballPos.y)
+				{
+					if (type == (sf::Uint8)ObjectType::Ball)
+					{
+						ball->setPosition(ballPos);
+						ball->speed = speed;
+					}
+				}
+			}
+
+			// Left:
+			if (m_IsHost)
+			{
+				sf::Packet leftPacket;
+				left->Update(dt);
+				leftPacket << (sf::Uint8)ObjectType::Left << left->getPosition().x << left->getPosition().y;
+				m_Socket.send(leftPacket);
+			}
+			else
+			{
+				sf::Vector2f leftPos;
+				sf::Uint8 type;
+				sf::Packet packet;
+				m_Socket.receive(packet);
+				if (packet >> type >> leftPos.x >> leftPos.y)
+				{
+					if (type == (sf::Uint8)ObjectType::Left)
+						left->setPosition(leftPos);
+				}
+			}
+
+			// Right:
+			if (m_IsHost)
+			{
+				sf::Uint8 type;
+				sf::Vector2f rightPos;
+				sf::Packet packet;
+				m_Socket.receive(packet);
+				if (packet >> type >> rightPos.x >> rightPos.y)
+				{
+					if (type == (sf::Uint8)ObjectType::Right)
+						right->setPosition(rightPos);
+				}
+			}
+			else
+			{
+				sf::Packet rightPacket;
+				right->Update(dt);
+				rightPacket << (sf::Uint8)ObjectType::Right << right->getPosition().x << right->getPosition().y;
+				m_Socket.send(rightPacket);
+			}
+
+			// Temporary solutions.
+			if (BallPaddleCollision(*left, *ball))
+				m_HitSound.play();
+			if (BallPaddleCollision(*right, *ball))
+				m_HitSound.play();
+
+			// Updates:
+			auto result = WorldBallCollision(480.f, 0, 600.f, *ball);
+
+			switch (result)
+			{
+			case GameOverState::None:
+				break;
+			case GameOverState::LeftWins:
+				m_ScoreLeft += 1;
+				m_ScoredSound.play();
+				Reset();
+				UpdateScoreText();
+				break;
+			case GameOverState::RightWins:
+				m_ScoreRight += 1;
+				m_ScoredSound.play();
+				Reset();
+				UpdateScoreText();
+				break;
+			}
+		}
+
+		void HandleInput(sf::Event event) override
+		{
+			if (m_Socket.isBlocking())
+				return;
+
+			if (event.type == sf::Event::KeyPressed)
+			{
+				if (m_IsHost)
+				{
+					if (event.key.code == sf::Keyboard::Key::Space)
+					{
+						m_Paused = false;
+						sf::Packet packet;
+						packet << sf::String("play");
+						m_Socket.send(packet);
+					}
+				}
+
+				if (event.key.code == sf::Keyboard::Key::BackSpace)
+				{
+					sceneHandler.SetScene("main_menu");
+					return;
+				}
+			}
+
+			if(m_IsHost)
+				left->HandleInput(event);
+			else
+				right->HandleInput(event);
+		}
+
+		void OnSceneLeave() override
+		{
+			sf::Packet packet;
+			packet << sf::String("disconnect");
+			m_Socket.send(packet);
+
+			delete ball;
+			delete left;
+			delete right;
+
+			delete m_LeftScoreText;
+			delete m_RightScoreText,
+			delete m_GoBackText;
+
+			m_ScoreLeft = 0;
+			m_ScoreRight = 0;
+
+			Reset();
+		}
+
+	private:
+		void Reset()
+		{
+			m_Paused = true;
+
+			ball->SetRandomVelocity();
+			ball->setPosition(600.f / 2.f - ball->getRadius() / 2.f,
+				480.f / 2.f - ball->getRadius() / 2.f);
+
+			left->setPosition(
+				50.f - left->getSize().x / 2.f,
+				480.f / 2.f - left->getSize().y / 2.f
+			);
+			right->setPosition(
+				550.f - left->getSize().x / 2.f,
+				480.f / 2.f - left->getSize().y / 2.f
+			);
+		}
+
+		void UpdateScoreText()
+		{
+			m_LeftScoreText->setString(std::to_string(m_ScoreLeft));
+			m_RightScoreText->setString(std::to_string(m_ScoreRight));
+		}
+
+		void LoadSceneAssets()
+		{
+			m_Socket.setBlocking(false);
+
 			// Ball:
 			ball = new Ball();
 			ball->setPosition(600.f / 2.f - ball->getRadius() / 2.f,
@@ -194,113 +432,6 @@ namespace pong
 			UpdateScoreText();
 		}
 
-		void Render(sf::RenderTarget& target) override
-		{
-			target.draw(*ball);
-			target.draw(*left);
-			target.draw(*right);
-
-			target.draw(*m_LeftScoreText);
-			target.draw(*m_RightScoreText);
-
-			target.draw(*m_GoBackText);
-		}
-
-		void Update(float dt) override
-		{
-			if (m_Paused)
-				return;
-
-			// Temporary solutions.
-			if (BallPaddleCollision(*left, *ball))
-				m_HitSound.play();
-			if (BallPaddleCollision(*right, *ball))
-				m_HitSound.play();
-
-			ball->Update(dt);
-			left->Update(dt);
-			right->Update(dt);
-
-			auto result = WorldBallCollision(480.f, 0, 600.f, *ball);
-
-			switch (result)
-			{
-			case GameOverState::None:
-				break;
-			case GameOverState::LeftWins:
-				m_ScoreLeft += 1;
-				m_ScoredSound.play();
-				Reset();
-				UpdateScoreText();
-				break;
-			case GameOverState::RightWins:
-				m_ScoreRight += 1;
-				m_ScoredSound.play();
-				Reset();
-				UpdateScoreText();
-				break;
-			}
-		}
-
-		void HandleInput(sf::Event event) override
-		{
-			if (event.type == sf::Event::KeyPressed)
-			{
-				if (event.key.code == sf::Keyboard::Key::Space)
-					m_Paused = false;
-
-				if (event.key.code == sf::Keyboard::Key::BackSpace)
-				{
-					sceneHandler.SetScene("main_menu");
-					return;
-				}
-			}
-
-			left->HandleInput(event);
-			right->HandleInput(event);
-		}
-
-		void OnSceneLeave() override
-		{
-			delete ball;
-			delete left;
-			delete right;
-
-			delete m_LeftScoreText;
-			delete m_RightScoreText,
-			delete m_GoBackText;
-
-			m_ScoreLeft = 0;
-			m_ScoreRight = 0;
-
-			Reset();
-		}
-
-	private:
-		void Reset()
-		{
-			m_Paused = true;
-
-			ball->SetRandomVelocity();
-			ball->setPosition(600.f / 2.f - ball->getRadius() / 2.f,
-				480.f / 2.f - ball->getRadius() / 2.f);
-
-			left->setPosition(
-				50.f - left->getSize().x / 2.f,
-				480.f / 2.f - left->getSize().y / 2.f
-			);
-			right->setPosition(
-				550.f - left->getSize().x / 2.f,
-				480.f / 2.f - left->getSize().y / 2.f
-			);
-		}
-
-		void UpdateScoreText()
-		{
-			m_LeftScoreText->setString(std::to_string(m_ScoreLeft));
-			m_RightScoreText->setString(std::to_string(m_ScoreRight));
-		}
-
 	private:
 		sf::RenderWindow& refWindow;
 		SceneHandler& sceneHandler;
@@ -319,5 +450,9 @@ namespace pong
 		sf::Text *m_LeftScoreText = nullptr, *m_RightScoreText = nullptr, *m_GoBackText = nullptr;
 		Paddle *left = nullptr, *right = nullptr;
 		Ball* ball = nullptr;
+
+	private:
+		sf::TcpSocket m_Socket;
+		bool m_IsHost;
 	};
 }

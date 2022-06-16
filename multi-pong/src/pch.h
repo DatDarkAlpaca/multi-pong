@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Network.hpp>
 #include <SFML/Audio.hpp>
 
 #include <unordered_map>
