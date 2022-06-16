@@ -195,6 +195,12 @@ namespace pong
 
 		void Update(float dt) override
 		{
+			sf::Packet packet;
+			m_Socket.receive(packet);
+			sf::String data;
+			if (packet >> data && data == "disconnect")
+				sceneHandler.SetScene("main_menu");
+
 			if (m_Socket.isBlocking())
 				return;
 
@@ -338,6 +344,10 @@ namespace pong
 
 		void OnSceneLeave() override
 		{
+			sf::Packet packet;
+			packet << sf::String("disconnect");
+			m_Socket.send(packet);
+
 			delete ball;
 			delete left;
 			delete right;
@@ -442,7 +452,6 @@ namespace pong
 		Ball* ball = nullptr;
 
 	private:
-		sf::TcpSocket m_Client;
 		sf::TcpSocket m_Socket;
 		bool m_IsHost;
 	};
