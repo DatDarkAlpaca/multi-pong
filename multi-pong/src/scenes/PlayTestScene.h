@@ -103,21 +103,31 @@ namespace pong
 			return GameOverState::LeftWins;
 	}
 
+	static void normalize(sf::Vector2f& vector)
+	{
+		auto m = std::sqrtf(vector.x * vector.x + vector.y * vector.y);
+		vector.x /= m;
+		vector.y /= m;
+	}
+
 	bool BallPaddleCollision(Paddle& paddle, Ball& ball)
 	{
-		float delta = 0.5f;
-
-		auto ballBounds = ball.getGlobalBounds();
-		sf::FloatRect bounds = {
-			ballBounds.left + delta,
-			ballBounds.top + delta,
-			ballBounds.width + delta,
-			ballBounds.height + delta
+		sf::Vector2f paddleMiddle = {
+			paddle.getGlobalBounds().left + paddle.getGlobalBounds().width / 2.f,
+			paddle.getGlobalBounds().top + paddle.getGlobalBounds().height / 2.f
 		};
 
-		if (paddle.getGlobalBounds().intersects(bounds))
+		sf::Vector2f ballMiddle = {
+			ball.getGlobalBounds().left + ball.getGlobalBounds().width / 2.f,
+			ball.getGlobalBounds().top + ball.getGlobalBounds().height / 2.f
+		};
+
+		if (ball.getGlobalBounds().intersects(paddle.getGlobalBounds()))
 		{
-			ball.velocity.x *= -1.f;
+			auto dir = paddleMiddle - ballMiddle;
+			normalize(dir);
+
+			ball.velocity = -dir;
 			return true;
 		}
 
@@ -201,15 +211,15 @@ namespace pong
 			if (m_Paused)
 				return;
 
-			ball->Update(dt);
-			left->Update(dt);
-			right->Update(dt);
-
 			// Temporary solutions.
 			if (BallPaddleCollision(*left, *ball))
 				m_HitSound.play();
 			if (BallPaddleCollision(*right, *ball))
 				m_HitSound.play();
+
+			ball->Update(dt);
+			left->Update(dt);
+			right->Update(dt);
 
 			auto result = WorldBallCollision(480.f, 0, 600.f, *ball);
 
