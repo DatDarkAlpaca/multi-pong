@@ -242,7 +242,7 @@ namespace pong
 			{
 				sf::Packet ballPacket;
 				ball->Update(dt);
-				ballPacket << (sf::Uint8)ObjectType::Ball <<  ball->getPosition().x << ball->getPosition().y;
+				ballPacket << (sf::Uint8)ObjectType::Ball << ball->speed << ball->getPosition().x << ball->getPosition().y;
 				m_Socket.send(ballPacket);
 			}
 			else
@@ -250,11 +250,15 @@ namespace pong
 				sf::Vector2f ballPos;
 				sf::Uint8 type;
 				sf::Packet packet;
+				float speed;
 				m_Socket.receive(packet);
-				if (packet >> type >> ballPos.x >> ballPos.y)
+				if (packet >> type >> speed >> ballPos.x >> ballPos.y)
 				{
-					if(type == (sf::Uint8)ObjectType::Ball)
+					if (type == (sf::Uint8)ObjectType::Ball)
+					{
 						ball->setPosition(ballPos);
+						ball->speed = speed;
+					}
 				}
 			}
 
