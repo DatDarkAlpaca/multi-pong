@@ -210,35 +210,8 @@ namespace pong
 			if (m_Paused)
 				return;
 
-			// Temporary solutions.
-			if (BallPaddleCollision(*left, *ball))
-				m_HitSound.play();
-			if (BallPaddleCollision(*right, *ball))
-				m_HitSound.play();
-
-			// Updates:
-			auto result = WorldBallCollision(480.f, 0, 600.f, *ball);
-
-			switch (result)
-			{
-			case GameOverState::None:
-				break;
-			case GameOverState::LeftWins:
-				m_ScoreLeft += 1;
-				m_ScoredSound.play();
-				Reset();
-				UpdateScoreText();
-				break;
-			case GameOverState::RightWins:
-				m_ScoreRight += 1;
-				m_ScoredSound.play();
-				Reset();
-				UpdateScoreText();
-				break;
-			}
-
 			// Networking:
-			if(m_IsHost)
+			if (m_IsHost)
 			{
 				sf::Packet ballPacket;
 				ball->Update(dt);
@@ -292,7 +265,7 @@ namespace pong
 				m_Socket.receive(packet);
 				if (packet >> type >> rightPos.x >> rightPos.y)
 				{
-					if(type == (sf::Uint8)ObjectType::Right)
+					if (type == (sf::Uint8)ObjectType::Right)
 						right->setPosition(rightPos);
 				}
 			}
@@ -302,6 +275,33 @@ namespace pong
 				right->Update(dt);
 				rightPacket << (sf::Uint8)ObjectType::Right << right->getPosition().x << right->getPosition().y;
 				m_Socket.send(rightPacket);
+			}
+
+			// Temporary solutions.
+			if (BallPaddleCollision(*left, *ball))
+				m_HitSound.play();
+			if (BallPaddleCollision(*right, *ball))
+				m_HitSound.play();
+
+			// Updates:
+			auto result = WorldBallCollision(480.f, 0, 600.f, *ball);
+
+			switch (result)
+			{
+			case GameOverState::None:
+				break;
+			case GameOverState::LeftWins:
+				m_ScoreLeft += 1;
+				m_ScoredSound.play();
+				Reset();
+				UpdateScoreText();
+				break;
+			case GameOverState::RightWins:
+				m_ScoreRight += 1;
+				m_ScoredSound.play();
+				Reset();
+				UpdateScoreText();
+				break;
 			}
 		}
 
