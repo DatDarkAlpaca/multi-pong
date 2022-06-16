@@ -68,6 +68,8 @@ namespace pong
 	public:
 		void SetRandomVelocity()
 		{
+			speed = 250.f;
+
 			// Todo: set a random generator up.
 			float angle = 30;
 			float to_rad = -std::numbers::pi / 180.f;
@@ -78,7 +80,7 @@ namespace pong
 
 	public:
 		sf::Vector2f velocity;
-		float speed = 250.f;
+		float speed;
 	};
 
 	enum class GameOverState { None = 0, LeftWins, RightWins };
@@ -101,7 +103,7 @@ namespace pong
 			return GameOverState::LeftWins;
 	}
 
-	void BallPaddleCollision(Paddle& paddle, Ball& ball)
+	bool BallPaddleCollision(Paddle& paddle, Ball& ball)
 	{
 		float delta = 0.5f;
 
@@ -114,7 +116,12 @@ namespace pong
 		};
 
 		if (paddle.getGlobalBounds().intersects(bounds))
+		{
 			ball.velocity.x *= -1.f;
+			return true;
+		}
+
+		return false;
 	}
 
 	/*
@@ -125,7 +132,13 @@ namespace pong
 	public:
 		PlayTestScene(sf::RenderWindow& window, SceneHandler& sceneHandler, sf::Font* font)
 			: refWindow(window), sceneHandler(sceneHandler), m_Font(font)
-		{ }
+		{
+			m_HitBuffer.loadFromFile("./res/sounds/hit.wav");
+			m_HitSound.setBuffer(m_HitBuffer);
+
+			m_ScoredBuffer.loadFromFile("./res/sounds/scored.wav");
+			m_ScoredSound.setBuffer(m_ScoredBuffer);
+		}
 
 	public:
 		void OnSceneEnter() override
@@ -192,8 +205,11 @@ namespace pong
 			left->Update(dt);
 			right->Update(dt);
 
-			BallPaddleCollision(*left, *ball);
-			BallPaddleCollision(*right, *ball);
+			// Temporary solutions.
+			if (BallPaddleCollision(*left, *ball))
+				m_HitSound.play();
+			if (BallPaddleCollision(*right, *ball))
+				m_HitSound.play();
 
 			auto result = WorldBallCollision(480.f, 0, 600.f, *ball);
 
@@ -203,11 +219,13 @@ namespace pong
 				break;
 			case GameOverState::LeftWins:
 				m_ScoreLeft += 1;
+				m_ScoredSound.play();
 				Reset();
 				UpdateScoreText();
 				break;
 			case GameOverState::RightWins:
 				m_ScoreRight += 1;
+				m_ScoredSound.play();
 				Reset();
 				UpdateScoreText();
 				break;
@@ -277,6 +295,11 @@ namespace pong
 		sf::RenderWindow& refWindow;
 		SceneHandler& sceneHandler;
 		sf::Font* m_Font;
+
+	// Testing:
+	private:
+		sf::SoundBuffer m_HitBuffer, m_ScoredBuffer;
+		sf::Sound m_HitSound, m_ScoredSound;
 
 	private:
 		unsigned int m_ScoreLeft = 0, m_ScoreRight = 0;
